@@ -233,7 +233,7 @@ void MainWindow::button_displaySend_pressed(bool checked){
     }
 }
 
-/*Event Filter Methode für Textboxen*/
+/*Event Filter Methode für Textboxen(Automatische Auswahl des Textes bei Mausclick oder focus in)*/
 bool MainWindow::eventFilter(QObject *watched, QEvent *event){
     if(watched == ui->lineEditDisplayB1 && (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::FocusIn)){
         ui->lineEditDisplayB1->selectAll();
