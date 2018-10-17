@@ -98,12 +98,12 @@ void MainWindow::button_getTemp_pressed(bool checked){
         QString tempString = QString(Data);
         QString dataString;
 
-        if(tempString.indexOf("=") > 0){
-            for(int i = tempString.indexOf("=")+1; i < tempString.indexOf("\n"); i++){          // Temperatur aus String lessen
-                if(i > (tempString.size()-1)) break;
-                dataString.append(tempString[i]);
+        foreach(QChar c, tempString){
+            if(c.isDigit() || c == '.' || c == ','){
+                dataString.append(c);
             }
         }
+
         ui->lcdNumberTemp->display(dataString);                                                 //Temperatur anzeigen
         ui->lcdNumberTemp->show();
     }
@@ -152,9 +152,9 @@ void MainWindow::dial_stepper_valueChanged(int value){
 
 /*Serielle Schnittstelle initialisieren*/
 void MainWindow::button_connect_pressed(bool checked){
-    if(!m_isConnected && ports.size() > 0){
+    if(!m_isConnected && ports.size() > 0){                          //Mit Uart verbinden
         serial->setPortName(ports[ ui->comboBoxConnect->currentData().toInt()].portName());     //Gewählter Port in der Combobox ermiiteln
-        serial->setBaudRate(QSerialPort::Baud9600);
+        serial->setBaudRate(QSerialPort::Baud9600);                 //Parameter setzen
         serial->setDataBits(QSerialPort::Data8);
         serial->setStopBits(QSerialPort::OneStop);
         serial->setFlowControl(QSerialPort::NoFlowControl);
@@ -281,7 +281,7 @@ void MainWindow::serial_errorHandler(QSerialPort::SerialPortError error){
     }
 }
 
-void MainWindow::comboBoxConnect_indexChanged(int index){
+void MainWindow::comboBoxConnect_indexChanged(int index){                               //Methode zur Anzeige der Portinformationen in einer Infobox(es wurden keine Information gefunden(Win10, ubuntu, rasbian))
     /*    QString text;
 
     ui->textBrowserConnect->clear();
