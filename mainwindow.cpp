@@ -37,13 +37,15 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEditSinusValue->installEventFilter(this);
     ui->lineEditSinusPos->installEventFilter(this);
 
+    ui->labelError->setText("");
+
     ports = QSerialPortInfo::availablePorts();                                      //Serielle Ports scannen
     if(ports.size() >0){
         for(int i = 0; i < ports.size(); i++){                                      //comboBox mit den verfügbaren Ports füllen
             ui->comboBoxConnect->addItem(ports[i].portName(), QVariant(i));
         }
 
-        /*  QString text;
+        /*  QString text;                                                            //Infobox mit Portinfos füllen
 
         int index = ui->comboBoxConnect->currentData().toInt();
         ui->textBrowserConnect->clear();
@@ -94,7 +96,18 @@ void MainWindow::button_getTemp_pressed(bool checked){
         serial->clear(QSerialPort::Direction::Output);
         serial->write("tr\r");
         serial->waitForReadyRead();                                             //auf Antwort warten
-        QByteArray Data = serial->readLine();                                   //Zeile lesen
+        QByteArray Data;
+        bool found = false;
+        for(int i = 0; i < 5; i++){                                            //Tasten Echo filtern(wenn Tastenecho auf dem stm32 entfernt wird, kann die die for Schleife entfernt werden)
+                Data  = serial->readLine();                                   //Zeile lesen
+                foreach(QChar c, Data){
+                    if(c == '='){
+                       found = true;
+                       break;
+                    }
+                }
+                if(found) break;
+        }
         QString tempString = QString(Data);
         QString dataString;
 
@@ -103,7 +116,7 @@ void MainWindow::button_getTemp_pressed(bool checked){
                 dataString.append(c);
             }
         }
-
+        dataString.truncate(dataString.size()-3);                                       //nicht verwendete Nachkommastellen abschneiden
         ui->lcdNumberTemp->display(dataString);                                                 //Temperatur anzeigen
         ui->lcdNumberTemp->show();
     }
@@ -281,7 +294,7 @@ void MainWindow::serial_errorHandler(QSerialPort::SerialPortError error){
     }
 }
 
-void MainWindow::comboBoxConnect_indexChanged(int index){                               //Methode zur Anzeige der Portinformationen in einer Infobox(es wurden keine Information gefunden(Win10, ubuntu, rasbian))
+void MainWindow::comboBoxConnect_indexChanged(int index){                               //Slot-Methode zur Anzeige der Portinformationen in einer Infobox(es wurden keine Information gefunden(Win10, ubuntu, rasbian))
     /*    QString text;
 
     ui->textBrowserConnect->clear();
