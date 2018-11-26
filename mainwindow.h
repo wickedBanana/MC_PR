@@ -21,19 +21,18 @@ public:
 
 private:
     Ui::MainWindow *ui;
+    /*Objekt-Pointer*/
     rgbLed *led = nullptr;
-    QMutex *mutex = nullptr;
     QSerialPort *serial = nullptr;
     QList<QSerialPortInfo> ports;
-    char m_buffer[1024];
+    char m_buffer[1024];            //Read/Write-Buffer
 
-    bool m_statusDisplay = false;
-    bool m_isConnected = false;
-    bool eventFilter(QObject *watched, QEvent *event);
-signals:
-    void exit_thread(bool exit);
+    bool m_statusDisplay = false;       //Zustandsvariable Zyklisches Tempraturmessen an/aus
+    bool m_isConnected = false;         //Zustandsvariable Serielleschnittstelle verbunden
+    bool eventFilter(QObject *watched, QEvent *event); //evenFilter für die Eingabefelder
 
 private slots:
+    /*------Prototypen-----*/
     void slider_rot_moved(int value);
     void slider_gruen_moved(int value);
     void slider_blau_moved(int value);

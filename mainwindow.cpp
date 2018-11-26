@@ -8,9 +8,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     ui->setupUi(this);
-    led = new rgbLed();
-    serial = new QSerialPort();
+    led = new rgbLed();                 //neues rgbLED Objekt
+    serial = new QSerialPort();         //neues serialPort Objekt
 
+    /*----------Signal-Slot verbinden---*/
     connect(ui->horizontalSliderRot, SIGNAL(valueChanged(int)), this, SLOT(slider_rot_moved(int)));
     connect(ui->horizontalSliderGreun, SIGNAL(valueChanged(int)), this, SLOT(slider_gruen_moved(int)));
     connect(ui->horizontalSliderBlau, SIGNAL(valueChanged(int)), this, SLOT(slider_blau_moved(int)));
@@ -37,7 +38,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->lineEditSinusValue->installEventFilter(this);
     ui->lineEditSinusPos->installEventFilter(this);
 
-    ui->labelError->setText("");
+    ui->labelError->setText("");            //Error Label löschen
 
     ports = QSerialPortInfo::availablePorts();                                      //Serielle Ports scannen
     if(ports.size() >0){
@@ -66,9 +67,9 @@ MainWindow::~MainWindow()
 /*Slider für die RGB-LED*/
 void MainWindow::slider_rot_moved(int value){
     led->red =  value;                                                              //Postion des SLiders in entspechender Variable des LED Objekts speichern
-    if(m_isConnected){
-        int n = sprintf(m_buffer,"r%dg%db%d\r",led->red, led->green, led->blue);
-        serial->write(m_buffer, n);
+    if(m_isConnected){                                                              //Prüfen ob Serielerport verbunden
+        int n = sprintf(m_buffer,"r%dg%db%d\r",led->red, led->green, led->blue);    //Befehlstring in Buffer laden
+        serial->write(m_buffer, n);                                                 //Buffer senden
     }
 }
 
@@ -93,8 +94,8 @@ void MainWindow::slider_blau_moved(int value){
 /*Temperatur lesen*/
 void MainWindow::button_getTemp_pressed(bool checked){
     if(m_isConnected){
-        serial->clear(QSerialPort::Direction::Output);
-        serial->write("tr\r");
+        serial->clear(QSerialPort::Direction::Output);                           //Flush
+        serial->write("tr\r");                                                   //Befehlstring senden
         serial->waitForReadyRead();                                             //auf Antwort warten
         QByteArray Data;
         bool found = false;
@@ -117,7 +118,7 @@ void MainWindow::button_getTemp_pressed(bool checked){
             }
         }
         dataString.truncate(dataString.size()-3);                                       //nicht verwendete Nachkommastellen abschneiden
-        ui->lcdNumberTemp->display(dataString);                                                 //Temperatur anzeigen
+        ui->lcdNumberTemp->display(dataString);                                         //Temperatur anzeigen
         ui->lcdNumberTemp->show();
     }
 }
@@ -125,15 +126,14 @@ void MainWindow::button_getTemp_pressed(bool checked){
 /*Tempeatur Messung an/ausscchalten */
 void MainWindow::button_switchDisplay_pressed(bool checked){
     if(m_isConnected){
-        if(m_statusDisplay){
-            strcpy(m_buffer, "ta0\r");
-            ui->buttonSwitchDisplay->setText("Aus");
+        if(m_statusDisplay){                                    //Zyklische Temperaturmessung ist true -> Temperaturmessung stoppen
+            serial->write("ta0\r");
+            ui->buttonSwitchDisplay->setText("Aus");            //Text des Button anpassen
         }
         else {
-            strcpy(m_buffer, "ta1\r");
+            serial->write("ta1\r");                         //Zyklische Temperaturmessung ist false -> Temperaturmessung starten
             ui->buttonSwitchDisplay->setText("An");
         }
-        serial->write(m_buffer, 4);
         m_statusDisplay = !m_statusDisplay;
     }
 }
@@ -174,7 +174,7 @@ void MainWindow::button_connect_pressed(bool checked){
         serial->setParity(QSerialPort::Parity::NoParity);
         serial->setReadBufferSize(400);
         if(serial->open(QIODevice::ReadWrite)){                      //initialisieren erfolgreich
-            m_isConnected = true;
+            m_isConnected = true;                                    //Zustandsvariable setzen
             ui->pushButtonConnect->setText("Trennen");
             for(int i = 0; i<3; i++){                               //Workaround
                 serial->write("tr\r");
@@ -184,7 +184,7 @@ void MainWindow::button_connect_pressed(bool checked){
     }
     else {                                                          //Serielle Schnittstelle trennen
         serial->close();
-        m_isConnected = false;
+        m_isConnected = false;                                      //Zustandsvariable löschen
         ui->pushButtonConnect->setText("Verbinden");
     }
 }
@@ -192,7 +192,7 @@ void MainWindow::button_connect_pressed(bool checked){
 /*Neue Position des Drehrades des Servos senden*/
 void MainWindow::dial_servo_valueChanged(int value){
     if(m_isConnected){
-        ui->labelServo->setNum(value);
+        ui->labelServo->setNum(value);              //Wert des Labels unter dem Wahlrad anpasse
         int n = sprintf(m_buffer,"s%d\r",value);
         serial->write(m_buffer, n);
     }
@@ -232,11 +232,11 @@ void MainWindow::button_displaySend_pressed(bool checked){
             serial->write(m_buffer,n);
         }
         else if(ui->radioButtonDisplayPatern->isChecked()){                     //Bitmuster anzeigen
-            QLineEdit *tempLine[] = {ui->lineEditDisplayB1, ui->lineEditDisplayB2,ui->lineEditDisplayB3,ui->lineEditDisplayB4};
+            QLineEdit *tempLine[] = {ui->lineEditDisplayB1, ui->lineEditDisplayB2,ui->lineEditDisplayB3,ui->lineEditDisplayB4}; //Array von QLineEdit Objekten für die for-Schleife
             QString tempString[4];
             int tempInt[4];
             bool ok;
-            for(int i = 0; i < 4; i++){
+            for(int i = 0; i < 4; i++){                 //Werte auslesen und umwandeln
                 tempString[i] = tempLine[i]->text();
                 tempInt[i] = tempString[i].toInt(&ok,16);
             }
@@ -246,10 +246,10 @@ void MainWindow::button_displaySend_pressed(bool checked){
     }
 }
 
-/*Event Filter Methode für Textboxen(Automatische Auswahl des Textes bei Mausclick oder focus in)*/
+/*Event Filter Methode für Textboxen(Automatische Auswahl des Textes bei Mausclick oder focus in auf Textbox)*/
 bool MainWindow::eventFilter(QObject *watched, QEvent *event){
     if(watched == ui->lineEditDisplayB1 && (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::FocusIn)){
-        ui->lineEditDisplayB1->selectAll();
+        ui->lineEditDisplayB1->selectAll(); //Text auswählen
         return true;
     }
     else if(watched == ui->lineEditDisplayB2 && (event->type() == QEvent::MouseButtonPress || event->type() == QEvent::FocusIn)){

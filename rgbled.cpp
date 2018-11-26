@@ -1,5 +1,5 @@
 #include "rgbled.h"
-
+/*Klasse zum darstellen des Zustands der RGB-LED*/
 rgbLed::rgbLed()
 {
     green = 0;
